@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
+import plotly.graph_objects as go
+import random
 
 # --- SEGURIDAD ---
 def check_password():
@@ -16,12 +17,9 @@ def check_password():
         return False
     return True
 
-# --- CONTENIDO PRINCIPAL ---
 if check_password():
     st.set_page_config(page_title="Trackmind APEX", layout="wide")
-    st.title("🏎️ Centro de Estrategia APEX")
     
-    # LISTA DE LOS 22 PILOTOS (Parrilla 2026)
     lista_pilotos = [
         "K. Antonelli", "M. Verstappen", "L. Norris", "O. Piastri", 
         "G. Russell", "L. Hamilton", "C. Leclerc", "C. Sainz",
@@ -31,31 +29,43 @@ if check_password():
         "J. Doohan", "B. Bortoleto"
     ]
     
+    st.title("🏎️ Centro de Estrategia APEX")
+    
     st.sidebar.header("Panel de Control")
     piloto = st.sidebar.selectbox("Seleccionar Operador:", lista_pilotos)
     
-    # Simulación de datos para que todos tengan algo que mostrar
-    # (En el futuro esto se puede conectar a datos reales)
-    import random
-    prob_victoria = round(random.uniform(5.0, 45.0), 1)
-    estados = ["Óptimo", "Estable", "Riesgo Motor", "Desgaste Neumáticos"]
-    estado_actual = random.choice(estados)
+    # --- SIMULACIÓN DE PREDICCIÓN ---
+    prob_top10 = random.randint(30, 99)
+    prob_victoria = round(prob_top10 * 0.4, 1) # La victoria siempre es más difícil que el top 10
 
     col1, col2 = st.columns(2)
-    
     with col1:
-        st.subheader(f"Piloto: {piloto}")
         st.metric("Probabilidad de Victoria", f"{prob_victoria}%")
-        st.info(f"Estado del Sistema: {estado_actual}")
-
     with col2:
-        # Gráfico de rendimiento simulado
-        df = pd.DataFrame({
-            "Sector": ["S1", "S2", "S3"], 
-            "Rendimiento": [random.randint(80, 98) for _ in range(3)]
-        })
-        fig = px.line(df, x="Sector", y="Rendimiento", title=f"Telemetría: {piloto}")
-        st.plotly_chart(fig, use_container_width=True)
+        st.write(f"**Probabilidad de Top 10:** {prob_top10}%")
+        st.progress(prob_top10 / 100) # Barra de progreso visual
 
     st.divider()
-    st.caption("Trackmind APEX v11.0 | Parrilla Completa 2026")
+
+    # --- GRÁFICO DE RADAR ---
+    st.subheader(f"Análisis de Rendimiento: {piloto}")
+    categorias = ['Velocidad', 'Neumáticos', 'Adelantamientos', 'Estrategia', 'Salida']
+    valores = [random.randint(75, 100) if prob_top10 > 70 else random.randint(50, 85) for _ in range(5)]
+    
+    fig = go.Figure()
+    fig.add_trace(go.Scatterpolar(
+          r=valores + [valores[0]],
+          theta=categorias + [categorias[0]],
+          fill='toself',
+          name=piloto,
+          line_color='#00ff41' # Verde tecnológico
+    ))
+
+    fig.update_layout(
+      polar=dict(radialaxis=dict(visible=True, range=[0, 100])),
+      template="plotly_dark",
+      showlegend=False
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+    st.caption("Los datos se recalculan en cada sesión de simulación.")
